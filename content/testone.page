@@ -1,3 +1,6 @@
+(str
 "This is a test
 "
+(link-to "index.html" "Home")
+)
 

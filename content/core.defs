@@ -1,0 +1,2 @@
+(defn link-to [href body] (str "<a href=\"" href "\">" body "</a>"))
+
