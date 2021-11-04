@@ -1,2 +1,17 @@
-(defn link-to [href body] (str "<a href=\"" href "\">" body "</a>"))
+(defn tag-attr [tag-name attrs & body] (str "<" tag-name " " attrs ">" (clojure.string/join body) "</" tag-name ">"))
+
+(defn tag [tag-name & body] (str "<" tag-name ">" (clojure.string/join body) "</" tag-name ">"))
+
+(defn link-to [href body] (tag-attr "a" (str "href=\"" href "\"") body))
+
+(defn p [body] (str "<p>" body "</p>"))
+
+(defn code [body] (str "<pre>" body "</pre>"))
+
+(defn article [& body] 
+  (tag "html"
+    (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">")
+    (tag "body" (link-to "index.html" "A Software Craft") (tag "article" (clojure.string/join body)))
+  )
+)
 

@@ -1,0 +1,13 @@
+article p {
+  font-size: 16px;
+  line-height: 20px;
+  font-family: "PT Serif", Georgia, serif;
+}
+article pre {
+  font-size: 15px;
+  line-height: 17px;
+  font-family: "Source Code Pro", Courier, monospace;
+  background: #f5f8fa;
+  color: #304550;
+}
+

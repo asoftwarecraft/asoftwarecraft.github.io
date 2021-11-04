@@ -5,7 +5,7 @@
 
 (defn eval-file [file-path]
   (println file-path)
-  (->> file-path slurp read-string eval))
+  (load-file file-path))
 
 (defn publish-file [f]
   (let
@@ -13,6 +13,7 @@
     (->> f .getPath eval-file (spit doc-path))))
 
 (defn -main []
+  (->> "content/publish.css" slurp (spit "docs/publish.css"))
   (eval-file "content/core.defs")
   (->> "content"
        clojure.java.io/file
