@@ -10,4 +10,8 @@ article pre {
   background: #f5f8fa;
   color: #304550;
 }
+article td {
+  vertical-align: top;
+  padding-top: 1em;
+}
 

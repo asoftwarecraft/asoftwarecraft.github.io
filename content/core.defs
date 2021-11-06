@@ -15,3 +15,9 @@
   )
 )
 
+(defn table [& body] (tag "table" (clojure.string/join body)))
+
+(defn column-all [& body] (str "<tr><td colspan=\"2\">" (clojure.string/join body) "</td></tr>"))
+(defn column-left [& body] (str "<tr><td>" (clojure.string/join body) "</td>"))
+(defn column-right [& body] (str "<td><div style=\"border-left: 2px solid #d0d0d0\">" (clojure.string/join body) "</div></td></tr>"))
+
