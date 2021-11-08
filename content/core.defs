@@ -6,18 +6,16 @@
 
 (defn p [body] (str "<p>" body "</p>"))
 
-(defn code [body] (str "<pre>" body "</pre>"))
-
-(defn article [& body] 
-  (tag "html"
-    (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">")
-    (tag "body" (link-to "index.html" "A Software Craft") (tag "article" (clojure.string/join body)))
-  )
-)
-
-(defn table [& body] (tag "table" (clojure.string/join body)))
+(defn break [] "<br/><br/>")
 
 (defn column-all [& body] (str "<tr><td colspan=\"2\">" (clojure.string/join body) "</td></tr>"))
 (defn column-left [& body] (str "<tr><td>" (clojure.string/join body) "</td>"))
-(defn column-right [& body] (str "<td><div style=\"border-left: 2px solid #d0d0d0\">" (clojure.string/join body) "</div></td></tr>"))
+(defn column-right [& body] (str "<td>" (tag "pre" (clojure.string/join body)) "</td></tr>"))
+
+(defn code-article [& body]
+  (tag "html"
+    (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">")
+    (tag "body" (link-to "index.html" "A Software Craft") (tag "article" (tag "table" (clojure.string/join body))))
+  )
+)
 

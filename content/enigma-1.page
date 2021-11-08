@@ -1,38 +1,36 @@
-(article
-(table
+(code-article
 (column-all 
-(p "I'm currently reading the biography Alan Turing: The Enigma, by Andrew Hodges. So when I started to learn Clojure, I decided a software simulation of the Enigma machine would make an interesting first project. The Enigma was actually a family of electro-mechanical encryption devices. You can find lots of details if you're interested - I won't describe them all here. I'll show some basic concepts of the Enigma, but won't try to accurately represent any specific historical Enigma model.")
-(p "This is novice Clojure code.")
+"I'm currently reading the biography Alan Turing: The Enigma, by Andrew Hodges. So when I started to learn Clojure, I decided a software simulation of the Enigma machine would make an interesting first project. The Enigma was actually a family of electro-mechanical encryption devices. You can find lots of details if you're interested - I won't describe them all here. I'll show some basic concepts of the Enigma, but won't try to accurately represent any specific historical Enigma model."
+(break)
+"This is novice Clojure code."
 )
-(column-left
-(p "The Enigma contains a series of rotors. A rotor has 26 different positions. We define a rotate function that takes a position and returns a new position, using with simple modulo 26 arithmetic.")
-)
+(column-left "The Enigma contains a series of rotors. A rotor has 26 different positions. We define a rotate function that takes a position and returns a new position, using with simple modulo 26 arithmetic.")
 (column-right
-(code "(deftest rotate-no-wrap
+"(deftest rotate-no-wrap
   (is (= (range 1 26) (map rotate (range 0 25)))))
 
 (deftest rotate-wrap (is (= 0 (rotate 25))))
 
 (defn rotate [position] (-> position inc (mod 26)))
 ")
-)
 (column-left
-(p "The operator sets the initial position of each rotor. For each character input, the first rotor advances one position. Each rotor has a \"notch\" position - when the rotor reaches this position, it advances the next rotor. We define an advance-positions function that takes a list of rotor positions and a list of notch positions and returns a new list of rotor positions.")
-(p "Say we have 3 rotors set to positions 0, 1, and 2. The rotor notches are at 0, 1, and 1. When we advance the rotors, the first one moves but its notch position is not reached so no other rotors move. In this case, we can construct a new list of positions by rotating the first position and appending the rest of the original positions.")
+"The operator sets the initial position of each rotor. For each character input, the first rotor advances one position. Each rotor has a \"notch\" position - when the rotor reaches this position, it advances the next rotor. We define an advance-positions function that takes a list of rotor positions and a list of notch positions and returns a new list of rotor positions."
+(break)
+"Say we have 3 rotors set to positions 0, 1, and 2. The rotor notches are at 0, 1, and 1. When we advance the rotors, the first one moves but its notch position is not reached so no other rotors move. In this case, we can construct a new list of positions by rotating the first position and appending the rest of the original positions."
 )
 (column-right
-(code "(deftest one-rotor-advances
+"(deftest one-rotor-advances
   (is (= '(1 1 2) (advance-positions '(0 1 2) '(0 1 1)))))
 
 (defn advance-positions [positions notches]
   (cons (-> positions first rotate) (rest positions)))
 ")
-)
+
 (column-left
-(p "Now with positions 0, 1, and 2 and notches at 1, 2, and 1, all rotors will rotate one position. Note the notch on the last rotor is not used as there is no \"next\" rotor after the last. In this case, we need to enhance the advance-positions function to construct the new list of positions recursively.")
-)
+"Now with positions 0, 1, and 2 and notches at 1, 2, and 1, all rotors will rotate one position. Note the notch on the last rotor is not used as there is no \"next\" rotor after the last. In this case, we need to enhance the advance-positions function to construct the new list of positions recursively.")
+
 (column-right
-(code "(deftest all-rotors-advance
+"(deftest all-rotors-advance
   (is (= '(1 2 3) (advance-positions '(0 1 2) '(1 2 1)))))
 
 (defn advance-positions [positions notches]
@@ -45,7 +43,5 @@
         (advance-positions (rest positions) (rest notches))
         (rest positions)))))
 ")
-)
-)
 )
 
