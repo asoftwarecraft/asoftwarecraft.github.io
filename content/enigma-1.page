@@ -1,4 +1,4 @@
-(code-article
+(code-article "Enigma: Encryption like it's 1939"
 (column-all 
 "I'm currently reading the biography Alan Turing: The Enigma, by Andrew Hodges. So when I started to learn Clojure, I decided a software simulation of the Enigma machine would make an interesting first project. The Enigma was actually a family of electro-mechanical encryption devices. You can find lots of details if you're interested - I won't describe them all here. I'll show some basic concepts of the Enigma, but won't try to accurately represent any specific historical Enigma model."
 (break)
