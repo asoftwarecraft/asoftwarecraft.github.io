@@ -1,4 +1,4 @@
 (list
-(doc-index documents)
+(doc-index documents "Index")
 "Index")
 

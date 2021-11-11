@@ -26,5 +26,6 @@
 )
 
 (defn doc-link [doc-data] (link-to (nth doc-data 0) (nth doc-data 1)))
-(defn doc-index [doc-list] (->> doc-list (map doc-link) (clojure.string/join "<br/>")))
+(defn doc-index [doc-list exclude] 
+  (->> doc-list (filter #(not= (nth % 1) exclude)) (map doc-link) (clojure.string/join "<br/>")))
 
