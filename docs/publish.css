@@ -31,4 +31,10 @@ header a {
   color: #101010;
   text-decoration: none;
 }
+nav {
+  font-size: 110%;
+  font-family: Georgia, "Times New Roman", serif;
+}
+nav a {
+  color: #0073c0;
 

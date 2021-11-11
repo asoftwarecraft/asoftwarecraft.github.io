@@ -1,4 +1,4 @@
-(list
-(doc-index documents "Index")
-"Index")
+(basic-page "Contents"
+ (tag "nav" (doc-index documents "Contents"))
+)
 
