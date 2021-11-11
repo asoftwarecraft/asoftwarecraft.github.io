@@ -1,3 +1,5 @@
+(def documents (list))
+
 (defn tag-attr [tag-name attrs & body] (str "<" tag-name " " attrs ">" (clojure.string/join body) "</" tag-name ">"))
 
 (defn tag [tag-name & body] (str "<" tag-name ">" (clojure.string/join body) "</" tag-name ">"))
@@ -13,11 +15,16 @@
 (defn column-right [& body] (str "<td>" (tag "pre" (clojure.string/join body)) "</td></tr>"))
 
 (defn code-article [title & body]
-  (tag "html"
-    (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">")
-    (tag "body" 
-      (tag "header" (link-to "index.html" "a software craft")) 
-      (tag "article" (tag "h1" title) (tag "table" (clojure.string/join body))))
-  )
+  (list
+    (tag "html"
+      (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">")
+      (tag "body" 
+        (tag "header" (link-to "index.html" "a software craft")) 
+        (tag "article" (tag "h1" title) (tag "table" (clojure.string/join body))))
+    )
+    title)
 )
+
+(defn doc-link [doc-data] (link-to (nth doc-data 0) (nth doc-data 1)))
+(defn doc-index [doc-list] (->> doc-list (map doc-link) (clojure.string/join "<br/>")))
 

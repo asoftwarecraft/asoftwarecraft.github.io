@@ -1,5 +1,4 @@
-(str
-"Hello world
-"
-(link-to "testone.html" "test")
-)
+(list
+(doc-index documents)
+"Index")
+
