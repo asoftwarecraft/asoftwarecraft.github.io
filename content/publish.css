@@ -8,8 +8,14 @@ article td {
 article pre {
   font-size: medium;
   font-family: "Lucida Console", Courier, monospace;
-  background: #f5f8fa;
   border-left: 2px solid #d0d0d0;
+}
+article pre.code {
+  background: #f5f8fa;
+}
+article pre.console {
+  color: white;
+  background: #101010;
 }
 article h1 {
   font-family: Georgia, "Times New Roman", serif;

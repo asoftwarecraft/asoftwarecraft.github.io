@@ -1,0 +1,102 @@
+<html><head><link rel="stylesheet" href="publish.css"></head><body><header><a href="index.html">a software craft</a></header><article><h1>Type Inferencing and Tail Recursion</h1><table><tr><td colspan="2">This is the second post in a series on my journey to learn more about the F# language. I'm choosing some coding exercises from Structure and Interpretation of Computer Programs and writing each one in both C# and F#. You can follow my progress here and see all my code on <a href="https://github.com/jediwhale/exploring.net">github</a>.<br/><br/>In the last post, we implemented Newton's method for calculating square roots. This time I want to look at a few of the differences between the C# code and the F# code.</td></tr><tr><td>Here's the C# code.</td><td><pre class="code">public class Newton {
+    public static double SquareRoot(double input) {
+        if (input < 0.0) throw new ArgumentOutOfRangeException();
+        if (input == 0.0) return input;
+        var guess = 1.0;
+        while (true) {
+            var newGuess = CalculateNewGuess(input, guess);
+            if (CloseEnough(guess, newGuess)) return newGuess;
+            guess = newGuess;
+        }
+    }
+
+    static double CalculateNewGuess(double input, double guess) {
+        return (guess + input / guess) / 2.0;
+    }
+
+    static bool CloseEnough(double guess, double newGuess) {
+        return Math.Abs((guess - newGuess) / guess) < 0.000001;
+    }
+}
+</pre></td></tr><tr><td>Looking at this code again, I realize we could implement SquareRoot as an extension method on the type double.</td><td><pre class="code">public static class Newton {
+    public static double SquareRoot(this double input) {
+        ...
+    }
+}
+</pre></td></tr><tr><td>This lets us use the method in a more OO style. For example, our unit test becomes:</td><td><pre class="code">public class NewtonCSharpTest: NewtonTest {
+    protected override double SquareRoot(double input) {
+        return input.SquareRoot();
+    }
+}
+</pre></td></tr><tr><td>Now the F# code:</td><td><pre class="code">module Newton =
+
+    let GoodEnough oldGuess newGuess = abs((oldGuess - newGuess) / oldGuess) < 0.000001
+
+    let rec SquareRootFromGuess guess input =
+        let newGuess = (guess + input / guess) / 2.0
+        if GoodEnough guess newGuess then newGuess else SquareRootFromGuess newGuess input
+
+    let SquareRoot input =
+        match input with
+        | 0.0 -> 0.0
+        | x when x < 0.0 -> raise (new System.ArgumentOutOfRangeException())
+        | _ -> SquareRootFromGuess 1.0 input
+</pre></td></tr><tr><td>I've just learned a more compact way to write the SquareRoot function:</td><td><pre class="code">    let SquareRoot = function
+        | 0.0 -> 0.0
+        | input when input < 0.0 -> raise (new System.ArgumentOutOfRangeException())
+        | input -> SquareRootFromGuess 1.0 input
+</pre></td></tr><tr><td colspan="2">Now let's look at a few of the differences between the C# and F# code. The first obvious difference is the lack of parentheses and braces - F# uses whitespace and indentation instead. I like to format my code to show its structure visually so I like that F# can use this without any additional syntax required.</td></tr><tr><td>C#'s default method protection is private and F#'s default is public. To keep our two implementations consistent, we can make our F# helper functions private:</td><td><pre class="code">    let private GoodEnough oldGuess newGuess = abs((oldGuess - newGuess) / oldGuess) < 0.000001
+
+    let rec private SquareRootFromGuess guess input =
+</pre></td></tr><tr><td colspan="2">At first glance, it seems that F# is dynamically typed, because we haven't specified any types for our functions or their arguments. But in fact, our F# functions are statically typed. The F# compiler is using type inferencing to determine the types for us. Sometimes, we may need to add type annotations if the compiler cannot determine a type.<br/><br/>The biggest difference in our implementations is the way we iterate to our final answer. In F#, we're using a recursive call, while our C# code uses a loop. We could have used recursion in C#, but if we make too many recursive calls, we might cause a stack overflow. In F#, we don't have this worry. The F# compiler will use a tail recursion optimization when a function's return value is a recursive call to the same function. This optimization replaces the current stack frame with a new one for the recursive call, rather than creating a new stack frame.</td></tr><tr><td>We can demonstrate this with a sample recursive function. First in C#:</td><td><pre class="code">public class Example {
+    public static int Recurse(int count) {
+        return count == 0 ? 42 : Recurse(count - 1);
+    }
+}
+</pre></td></tr><tr><td>And in F#:</td><td><pre class="code">module Example =
+    let rec Recurse input = if input = 0 then 42 else Recurse(input-1) 
+</pre></td></tr><tr><td>We call the function with the number of recursive calls we want it to make, and it just returns a fixed value. Let's rewrite our Console program so we can try it out:</td><td><pre class="code">public class Program {
+    static void Main(string[] args) {
+        while (true) {
+            System.Console.Write("? ");
+            input = System.Console.ReadLine();
+            if (string.IsNullOrEmpty(input)) break;
+            System.Console.WriteLine(functions[args[0]]());
+        }
+    }
+
+    static string input;
+
+    static readonly Dictionary<string, Func<string>> functions =
+        new Dictionary<string, Func<string>> {
+            {"c", () => DoubleFunction(CSharp.Newton.SquareRoot)},
+            {"f", () => DoubleFunction(FSharp.Newton.SquareRoot)},
+            {"cr", () => IntFunction(CSharp.Example.Recurse)},
+            {"fr", () => IntFunction(FSharp.Example.Recurse)}
+        };
+
+    static string DoubleFunction(Func<double, double> calculate) {
+        return calculate(double.Parse(input)).ToString();
+    }
+
+    static string IntFunction(Func<int, int=> calculate) {
+        return calculate(int.Parse(input)).ToString();
+    }
+}
+</pre></td></tr><tr><td>Our C# function fails when we hit 50000 recursive calls:</td><td><pre class="console">D:\my\code\exploring.net\source\Console\bin\Debug>console cr
+? 10
+42
+? 10000
+42
+? 50000
+
+Process is terminated due to StackOverflowException.
+</pre></td></tr><tr><td>Our F# version is still going strong at 100 million recursive calls:</td><td><pre class="console">D:\my\code\exploring.net\source\Console\bin\Debug>console fr
+? 10
+42
+? 100000
+42
+? 100000000
+42
+?
+</pre></td></tr><tr><td colspan="2">Next time: encapsulating data and behavior.</td></tr></table></article></body></html>

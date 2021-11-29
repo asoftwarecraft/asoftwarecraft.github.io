@@ -12,13 +12,13 @@
     [doc-name (clojure.string/replace (.getName f) "page" "html")
      doc-path (str "docs/" doc-name)
      doc-data (->> f .getPath eval-file)]
-    (cons doc-name (cons doc-path doc-data))))
+    (assoc doc-data :name doc-name :path doc-path)))
 
 (defn write-file [doc-data]
-  (spit (nth doc-data 1) (nth doc-data 2)))
+  (spit (doc-data :path) (doc-data :body)))
 
 (defn make-doc-def [doc-data]
-  (str "(list \"" (nth doc-data 0) "\" \"" (nth doc-data 3) "\")"))
+  (str "(list \"" (doc-data :name) "\" \"" (doc-data :title) "\")"))
 
 (defn walk-files [action]
   (->> "content"

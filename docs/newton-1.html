@@ -1,0 +1,161 @@
+<html><head><link rel="stylesheet" href="publish.css"></head><body><header><a href="index.html">a software craft</a></header><article><h1>Starting the New Year with Newton</h1><table><tr><td colspan="2">My New Year's resolution is to learn more about the F# language. I'm particularly interested in how F# code can play in an existing C# code base. I also want to see how F#, a functional language with some object-oriented features, compares to C#, an OO language with some functional capabilities. You can follow my progress here and see all my code on <a href="https://github.com/jediwhale/exploring.net">github</a>.<br/><br/>I decided to start by picking some coding exercises from the classic <a href="https://mitpress.mit.edu/sicp/">Structure and Interpretation of Computer Programs</a> and writing each one, first in C# and then in F#.<br/><br/>Our first exercise will be Newton's method for calculating a square root (section 1.1.7). Isaac Newton determined that for any number x and a guess y of the square root, a better guess is (y + x/y) / 2. We can use this formula to generate better and better guesses until we decide we're close enough. We'll use 1 as the initial guess and stop when the change between two successive guesses is very small.</td></tr><tr><td>We start the C# version with a test.</td><td><pre class="code">[TestFixture]
+public class NewtonTest {
+    [Test]
+    public void InitialGuessIsCorrect() {
+        Assert.AreEqual(1.0, Newton.SquareRoot(1.0));
+    }
+}
+</pre></td></tr><tr><td>And make it pass.</td><td><pre class="code">namespace Exploring.Net.CSharp {
+    public class Newton {
+        public static double SquareRoot(double input) {
+            return 1.0;
+        }
+    }
+}
+</pre></td></tr><tr><td>Another test.</td><td><pre class="code">    [Test]
+    public void ResultGetsCloseEnough() {
+        Assert.AreEqual(2.0, Newton.SquareRoot(4.0), 1E-10);
+    }
+
+</pre></td></tr><tr><td>Usually we'd use TDD to help us discover our solution, but in this case, we already know the algorithm we're going to use. So we just implement it.</td><td><pre class="code">    public static double SquareRoot(double input) {
+        var guess = 1.0;
+        while (true) {
+            var newGuess = CalculateNewGuess(input, guess);
+            if (CloseEnough(guess, newGuess)) return newGuess;
+            guess = newGuess;
+        }
+    }
+
+    static double CalculateNewGuess(double input, double guess) {
+        return (guess + input / guess) / 2.0;
+    }
+
+    static bool CloseEnough(double guess, double newGuess) {
+        return Math.Abs((guess - newGuess) / guess) < 0.000001;
+    }
+</pre></td></tr><tr><td>A couple more tests to handle edge cases.</td><td><pre class="code">    [Test]
+    public void NegativeInputThrowsException() {
+        Assert.Throws(() => Newton.SquareRoot(-1.0));
+    }
+
+    [Test]
+    public void ZeroIsHandled() {
+        Assert.AreEqual(0.0, Newton.SquareRoot(0.0));
+    }
+</pre></td></tr><tr><td>And our implementation is complete.</td><td><pre class="code">    public static double SquareRoot(double input) {
+        if (input < 0.0) throw new ArgumentOutOfRangeException();
+        if (input == 0.0) return input;
+        ...
+    }
+</pre></td></tr><tr><td>I want to make sure we're handling very large and small numbers, so two more tests, which pass without any more code. Yay!</td><td><pre class="code">    [Test]
+    public void LargeResultIsCalculated() {
+        Assert.AreEqual(1E50, Newton.SquareRoot(1E100), 1E40);
+    }
+
+    [Test]
+    public void SmallResultIsCalculated() {
+        Assert.AreEqual(1E-50, Newton.SquareRoot(1E-100), 1E-40);
+    }
+</pre></td></tr><tr><td>Now we can write a little console program to play with our square root calculator.
+</td><td><pre class="code">class Program {
+    static void Main(string[] args) {
+        while (true) {
+            System.Console.Write("? ");
+            var input = System.Console.ReadLine();
+            if (string.IsNullOrEmpty(input)) break;
+            System.Console.WriteLine(Newton.SquareRoot(double.Parse(input)));
+        }
+    }
+}
+</pre></td></tr><tr><td>Here it is in action.
+</td><td><pre class="console">D:\my\code\exploring.net\source\Console\bin\Debug>console
+? 1
+1
+? 2
+1.41421356237309
+? 3
+1.73205080756888
+? 4
+2
+</pre></td></tr><tr><td>Now for the F# version. My first thought is to figure out how to write tests in F#, but we already have a set of tests for a square root implementation and it'd be nice if we could reuse them. Let's start by refactoring our test class into an abstract base class and a test implementation class. The base class contains all the tests with the actual square root calculation replaced with an abstract method.</td><td><pre class="code">public abstract class NewtonTest {
+    [Test]
+    public void InitialGuessIsCorrect() {
+        Assert.AreEqual(1.0, SquareRoot(1.0));
+    }
+    ...
+    protected abstract double SquareRoot(double input);
+}
+
+[TestFixture]
+public class NewtonCSharpTest: NewtonTest {
+    protected override double SquareRoot(double input) {
+        return Newton.SquareRoot(input);
+    }
+}
+</pre></td></tr><tr><td>The tests still pass. We write an initial F# implementation.</td><td><pre class="code">namespace Exploring.Net.FSharp
+module Newton =
+    let SquareRoot input = 1.0
+</pre></td></tr><tr><td>And a test class for it. (We've put the C# and F# versions in different namespaces so we can reference them both from the same file.)</td><td><pre class="code">[TestFixture]
+public class NewtonCSharpTest: NewtonTest {
+    protected override double SquareRoot(double input) {
+        return CSharp.Newton.SquareRoot(input);
+    }
+}
+
+[TestFixture]
+public class NewtonFSharpTest: NewtonTest {
+    protected override double SquareRoot(double input) {
+        return FSharp.Newton.SquareRoot(input);
+    }
+}
+</pre></td></tr><tr><td>We have the first test passing for our F# version and the rest failing. We implement the rest of the algorithm.</td><td><pre class="code">module Newton =
+
+    let GoodEnough oldGuess newGuess = abs((oldGuess - newGuess) / oldGuess) < 0.000001
+
+    let rec SquareRootFromGuess guess input =
+        let newGuess = (guess + input / guess) / 2.0
+        if GoodEnough guess newGuess then newGuess else SquareRootFromGuess newGuess input
+
+    let SquareRoot input =
+        match input with
+        | 0.0 -> 0.0
+        | x when x < 0.0 -> raise (new System.ArgumentOutOfRangeException())
+        | _ -> SquareRootFromGuess 1.0 input
+</pre></td></tr><tr><td>All the tests pass! But is this what an experienced F# developer would write? At this point. I don't know. But I have my first F# program working and I'll learn more as I write more code. Let's change our console program to work with both versions.</td><td><pre class="code">class Program {
+    static void Main(string[] args) {
+            while (true) {
+                System.Console.Write("? ");
+                var input = System.Console.ReadLine();
+                if (string.IsNullOrEmpty(input)) break;
+                System.Console.WriteLine(SquareRoot(args[0], double.Parse(input)));
+            }
+        }
+
+    static double SquareRoot(string version, double input) {
+        if (version == "c") return CSharp.Newton.SquareRoot(input);
+        if (version == "f") return FSharp.Newton.SquareRoot(input);
+        throw new ApplicationException("unknown version");
+    }
+}
+</pre></td></tr><tr><td>And both versions return the same results.</td><td><pre class="console">D:\my\code\exploring.net\source\Console\bin\Debug>console c
+? 1
+1
+? 2
+1.41421356237309
+? 3
+1.73205080756888
+? 4
+2
+?
+
+D:\my\code\exploring.net\source\Console\bin\Debug>console f
+? 1
+1
+? 2
+1.41421356237309
+? 3
+1.73205080756888
+? 4
+2
+?
+</pre></td></tr><tr><td colspan="2">So there's my first lesson done. Next time, we'll look more closely at the differences between the C# and F# versions.</td></tr></table></article></body></html>
