@@ -1,5 +1,5 @@
 ;Sunday, February 12, 2017
-(code-article "Type Inferencing and Tail Recursion"
+(code-article "Type Inferencing and Tail Recursion" "2017-02-12"
 (wide "This is the second post in a series on my journey to learn more about the F# language. I'm choosing some coding exercises from Structure and Interpretation of Computer Programs and writing each one in both C# and F#. You can follow my progress here and see all my code on " (link-to "https://github.com/jediwhale/exploring.net" "github") "."
 (break)
 "In the last post, we implemented Newton's method for calculating square roots. This time I want to look at a few of the differences between the C# code and the F# code."

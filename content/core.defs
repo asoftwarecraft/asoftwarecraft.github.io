@@ -10,7 +10,7 @@
 
 (defn break [] "<br/><br/>")
 
-(defn basic-page [title & body]
+(defn basic-page [title date & body]
   (hash-map
     :body
     (tag "html"
@@ -19,8 +19,9 @@
         (tag "header" (link-to "index.html" "a software craft")) 
         (tag "article" (tag "h1" title) (clojure.string/join body)))
     )
-    :title
-    title)
+    :title title
+    :date date
+    )
 )
 
 (defn wide [& body] (str "<tr><td colspan=\"2\">" (clojure.string/join body) "</td></tr>"))
@@ -28,11 +29,28 @@
 (defn code [& body] (str "<td>" (tag-class "pre" "code" (clojure.string/join body)) "</td></tr>"))
 (defn console [& body] (str "<td>" (tag-class "pre" "console" (clojure.string/join body)) "</td></tr>"))
 
-(defn code-article [title & body]
-  (basic-page title (tag "table" (clojure.string/join body)))
+(defn code-article [title date & body]
+  (basic-page title date (tag "table" (clojure.string/join body)))
 )
 
-(defn doc-link [doc-data] (link-to (nth doc-data 0) (nth doc-data 1)))
+(defn doc-link [doc-data]
+  (tag "tr"
+    (tag "td"
+      (link-to (:name doc-data) (:title doc-data)) 
+    )
+    (tag "td" (:date doc-data))
+  )
+)
+ 
 (defn doc-index [doc-list exclude] 
-  (->> doc-list (filter #(not= (nth % 1) exclude)) (map doc-link) (clojure.string/join "<br/>")))
+  (tag "table"
+    (->>
+      doc-list
+      (filter #(not= (:title %) exclude))
+      (sort-by :date)
+      (map doc-link)
+      (clojure.string/join)
+    )
+  )
+)
 

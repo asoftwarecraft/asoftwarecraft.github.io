@@ -1,5 +1,5 @@
 ;Tuesday, January 24, 2017
-(code-article "Starting the New Year with Newton"
+(code-article "Starting the New Year with Newton" "2017-01-24"
 (wide 
 "My New Year's resolution is to learn more about the F# language. I'm particularly interested in how F# code can play in an existing C# code base. I also want to see how F#, a functional language with some object-oriented features, compares to C#, an OO language with some functional capabilities. You can follow my progress here and see all my code on " (link-to "https://github.com/jediwhale/exploring.net" "github") "."
 (break)

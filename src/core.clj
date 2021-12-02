@@ -18,7 +18,7 @@
   (spit (doc-data :path) (doc-data :body)))
 
 (defn make-doc-def [doc-data]
-  (str "(list \"" (doc-data :name) "\" \"" (doc-data :title) "\")"))
+  (str "(hash-map :name \"" (doc-data :name) "\" :title \"" (doc-data :title) "\" :date \"" (doc-data :date) "\")"))
 
 (defn walk-files [action]
   (->> "content"
@@ -32,6 +32,6 @@
 (defn -main []
   (->> "content/publish.css" slurp (spit "docs/publish.css"))
   (eval-file "content/core.defs")
-  ;(println (str "(def documents (list" (clojure.string/join " " (walk-files make-doc-def)) "))"))
+  (println (str "(def documents (list" (clojure.string/join " " (walk-files make-doc-def)) "))"))
   (eval (read-string (str "(def documents (list" (clojure.string/join " " (walk-files make-doc-def)) "))")))
   (walk-files write-file))

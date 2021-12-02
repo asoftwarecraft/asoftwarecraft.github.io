@@ -1,4 +1,4 @@
-(basic-page "Contents"
+(basic-page "Contents" "2021-12-02"
  (tag "nav" (doc-index documents "Contents"))
 )
 
