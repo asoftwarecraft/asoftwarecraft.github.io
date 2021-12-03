@@ -43,4 +43,7 @@ nav {
 }
 nav a {
   color: #0073c0;
-
+}
+nav td {
+  padding-top: 0;
+}

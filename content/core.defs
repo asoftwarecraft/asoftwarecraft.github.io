@@ -47,7 +47,7 @@
     (->>
       doc-list
       (filter #(not= (:title %) exclude))
-      (sort-by :date)
+      (sort-by :date #(compare %2 %1))
       (map doc-link)
       (clojure.string/join)
     )
