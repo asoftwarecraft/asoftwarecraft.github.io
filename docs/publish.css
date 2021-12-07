@@ -5,10 +5,14 @@ article td {
   vertical-align: top;
   padding-top: 1em;
 }
+article col.first {
+  width: 40%;
+}
 article pre {
   font-size: medium;
   font-family: "Lucida Console", Courier, monospace;
   border-left: 2px solid #d0d0d0;
+  overflow: auto;
 }
 article pre.code {
   background: #f5f8fa;
@@ -47,3 +51,8 @@ nav a {
 nav td {
   padding-top: 0;
 }
+table.full {
+  table-layout: fixed;
+  width: 100%;
+}
+

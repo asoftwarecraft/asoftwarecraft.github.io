@@ -1,0 +1,140 @@
+<html><head><link rel="stylesheet" href="publish.css"></head><body><header><a href="index.html">a software craft</a></header><article><h1>Encapsulation Two Ways</h1><table class="full"><colgroup><col class="first"><col></colgroup><tr><td colspan="2">This is the third post in a series on my journey to learn more about the F# language. I'm choosing some coding exercises from Structure and Interpretation of Computer Programs and writing each one in both C# and F#. You can follow my progress here and see all my code on <a href="https://github.com/jediwhale/exploring.net">github</a>.<br/><br/>This time, we're using the half-interval method to find roots of equations, i.e., a value x where f(x) = 0 for a continuous function f (Section 1.3.3). The idea is that, given two points a and b where f(a) < 0 < f(b), then the value x must lie somewhere between a and b. So we check the value of f at the midpoint of the interval. If it is zero, then we've found the root. If it's negative, then the root must be in the right half of the interval. If it's positive, the root's in the left half. We continue choosing smaller and smaller half-intervals until we hit a root or we decide the interval is small enough.</td></tr><tr><td>As usual, we start the C# version with a test. The test is split into an abstract class and a concrete class, as before, so we can re-use it later for the F# version.</td><td><pre class="code">public abstract class HalfIntervalTest {
+    [Test]
+    public void MidpointIsRoot() {
+        Assert.AreEqual(0.0, FindSineRoot(-0.5, 0.5));
+    }
+
+    protected abstract double FindSineRoot(double left, double right);
+}
+
+[TestFixture]
+public class HalfIntervalCSharpTest: HalfIntervalTest {
+    protected override double FindSineRoot(double left, double right) {
+        return HalfIntervalMethod.FindRoot(Math.Sin, left, right);
+    }
+}
+</pre></td></tr><tr><td>We're using the sine function and the first test has the root at the midpoint of the initial interval.<br/><br/>But we have a code smell, before we've even written any production code. There's a static method FindRoot with three parameters. For a more object-oriented style, let's encapsulate the interval in its own class, and the function in the HalfIntervalMethod class.</td><td><pre class="code">    protected override double FindSineRoot(double left, double right) {
+        return new HalfIntervalMethod(Math.Sin).FindRoot(new Interval(left, right));
+    }
+</pre></td></tr><tr><td>This isn't a series on TDD, so I won't show all the steps to reach the final C# implementation. Here's the tests:</td><td><pre class="code">public abstract class HalfIntervalTest {
+
+    [Test]
+    public void MidpointIsRoot() {
+        Assert.AreEqual(0.0, FindSineRoot(-0.5, 0.5));
+    }
+
+    [Test]
+    public void RootIsFoundWithPositiveValueAtLeft() {
+        Assert.AreEqual(Math.PI, FindSineRoot(Math.PI - 0.1, Math.PI + 0.5), 1E-10);
+    }
+
+    [Test]
+    public void RootIsFoundWithPositiveValueAtRight() {
+        Assert.AreEqual(Math.PI, FindSineRoot(Math.PI + 0.5, Math.PI - 0.1), 1E-10);
+    }
+
+    [Test]
+    public void ValuesWithSameSignThrowsException() {
+        Assert.Throws(() => FindSineRoot(Math.PI/2.0, Math.PI/2.0 + 1.0));
+    }
+
+    protected abstract double FindSineRoot(double left, double right);
+}
+</pre></td></tr><tr><td>The HalfIntervalMethod class checks that the function values at the interval end points do have opposite signs. We swap the interval if needed so that we have ascending values. Then we iterate choosing the appropriate half-interval until we hit a root or the interval is small enough.</td><td><pre class="code">public class HalfIntervalMethod {
+    public HalfIntervalMethod(Func<double, double> function) {
+        this.function = function;
+    }
+
+    public double FindRoot(Interval interval) {
+        var values = interval.Map(function);
+        if (!values.CrossesZero) {
+            throw new ArgumentException("Values are not opposite signs.");
+        }
+        return FindRootByHalfIntervals(values.Ascending ? interval.Swap : interval);
+    }
+
+    double FindRootByHalfIntervals(Interval interval) {
+        while (interval.Size >= 1E-10) {
+            var value = function(interval.MidPoint);
+            if (value == 0.0) break;
+            interval = value > 0.0 ? interval.RightHalf : interval.LeftHalf;
+        }
+        return interval.MidPoint;
+    }
+
+    readonly Func<double, double> function;
+}
+</pre></td></tr><tr><td>The Interval class encapsulates the endpoints of the interval and has a collection of useful methods. This is a common outcome when using TDD with an object-oriented language. We start by encapsulating some primitive data types and we find a bunch of methods that are attracted to the data. It creates a good abstraction that makes the HalfIntervalMethod code very readable.</td><td><pre class="code">public struct Interval {
+    public Interval(double start, double finish) {
+        this.start = start;
+        this.finish = finish;
+    }
+
+    public double MidPoint => (start + finish) / 2.0;
+    public double Size => Math.Abs(finish - start);
+
+    public bool CrossesZero => Math.Sign(start) == -Math.Sign(finish) && Math.Sign(start) != 0;
+    public bool Ascending => start < finish;
+
+    public Interval LeftHalf => new Interval(start, MidPoint);
+    public Interval RightHalf => new Interval(MidPoint, finish);
+    public Interval Swap => new Interval(finish, start);
+    public Interval Map(Func function) => new Interval(function(start), function(finish));
+
+    readonly double start;
+    readonly double finish;
+}
+</pre></td></tr><tr><td>Now the F# version. Before we start, there's a couple of F# practices that I've learned since the last post. First, function names are started with lower case by convention. Second, we can nest functions within other functions to control their visibility, rather than using private modifiers. So here's what my squareRoot function from last time looks like now.</td><td><pre class="code">let squareRoot input =
+
+    let rec squareRootFromGuess guess =
+        let newGuess = (guess + input / guess) / 2.0
+        let goodEnough = abs((guess - newGuess) / guess) < 0.000001
+        if goodEnough then newGuess else squareRootFromGuess newGuess 
+
+    match input with
+        | 0.0 -> 0.0
+        | input when input < 0.0 -> raise (new System.ArgumentOutOfRangeException())
+        | input -> squareRootFromGuess 1.0 
+</pre></td></tr><tr><td>Back to half intervals. We can write an Interval type in F# that's the same as the C# version: with encapsulated data and member functions. But the tutorials I've been reading suggest using data types with independent functions to fully exploit the functional capabilites of F#. So here goes:</td><td><pre class="code">module Interval = 
+
+    type IntervalType = {Start: float; Finish: float}
+
+    let create start finish = {Start = start; Finish = finish}
+
+    let midpoint interval = (interval.Start + interval.Finish) / 2.0
+    let size interval = abs(interval.Finish - interval.Start)
+
+    let crossesZero interval = sign(interval.Start) = -sign(interval.Finish) && sign(interval.Start) <> 0
+    let ascending interval = interval.Start < interval.Finish
+
+    let leftHalf interval = create interval.Start (midpoint interval)
+    let rightHalf interval = create (midpoint interval) interval.Finish
+    let swap interval = create interval.Finish interval.Start
+    let map aFunction interval  = create (aFunction interval.Start) (aFunction interval.Finish)
+</pre></td></tr><tr><td>Now let's use this in the half-interval method test class. The Interval module has a constructor method that we can call from C#. In the F# code I've read so far, this seems to be a common pattern.</td><td><pre class="code">[TestFixture]
+public class HalfIntervalFSharpTest: HalfIntervalTest {
+    protected override double FindSineRoot(double left, double right) {
+        return FSharp.HalfIntervalMethod.findSineRoot(FSharp.Interval.create(left, right));
+    }
+}
+</pre></td></tr><tr><td>Here's the F# implementation that passes the tests:</td><td><pre class="code">open Interval
+
+module HalfIntervalMethod = 
+
+    let findRoot aFunction interval =
+
+        let rec findRootByHalfInterval interval =
+            if size interval < 1E-10
+                then midpoint interval
+                else
+                    match aFunction (midpoint interval) with
+                        | 0.0 -> midpoint interval
+                        | value -> findRootByHalfInterval ((if value < 0.0 then rightHalf else leftHalf) interval)
+
+        let values = map aFunction interval
+        if crossesZero values 
+            then findRootByHalfInterval (if ascending values then interval else swap interval)
+            else raise (new System.ArgumentException("Values are not opposite signs."))
+
+    let findSineRoot interval = findRoot sin interval
+</pre></td></tr><tr><td colspan="2">A few final thoughts on the F# version compared to the C# version. We're using tail recursion again to iterate to the answer. Notice how we can select the right and left intervals by choosing a function to apply to the current interval: (if value < 0.0 then rightHalf else leftHalf) interval. This is the first little example of the power of functions as first-class objects.<br/><br/>In C#, we use a class to compose data: an interval is composed of two numbers. The class also encapsulates both data and methods. Public class members can be accessed from outside the class. Inside the class, private data and methods can be accessed from any class methods. In F#, we've used two different mechanisms for data composition and encapsulation. A type is used to compose data but we've used function nesting to control encapsulation. A nested function can only be used from within the enclosing function.<br/><br/>Next time: more fun with functions.</td></tr></table></article></body></html>
