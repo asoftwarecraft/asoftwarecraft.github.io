@@ -14,7 +14,7 @@
   (hash-map
     :body
     (tag "html"
-      (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">")
+      (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">" (tag "title" "a software craft"))
       (tag "body" 
         (tag "header" (link-to "index.html" "a software craft")) 
         (tag "article" (tag "h1" title) (clojure.string/join body)))
