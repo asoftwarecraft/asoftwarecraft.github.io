@@ -10,14 +10,14 @@
 
 (defn break [] "<br/><br/>")
 
-(defn basic-page [title date & body]
+(defn basic-page [title heading date & body]
   (hash-map
     :body
     (tag "html"
-      (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">" (tag "title" "a software craft"))
+      (tag "head" "<link rel=\"stylesheet\" href=\"publish.css\">" (tag "title" title))
       (tag "body" 
         (tag "header" (link-to "index.html" "a software craft")) 
-        (tag "article" (tag "h1" title) (clojure.string/join body)))
+        (tag "article" (tag "h1" heading) (clojure.string/join body)))
     )
     :title title
     :date date
@@ -30,7 +30,7 @@
 (defn console [& body] (str "<td>" (tag-class "pre" "console" (clojure.string/join body)) "</td></tr>"))
 
 (defn code-article [title date & body]
-  (basic-page title date
+  (basic-page title title date
     (tag-class "table" "full" (tag "colgroup" "<col class=\"first\"><col>") (clojure.string/join body)))
 )
 
