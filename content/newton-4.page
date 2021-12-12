@@ -1,0 +1,118 @@
+;Friday, April 7, 2017
+(code-article "More Fun with Functions" "2017-04-07"
+(wide %<This is the fourth post in a series on my journey to learn more about the F# language. I'm choosing some coding exercises from Structure and Interpretation of Computer Programs and writing each one in both C# and F#. You can follow my progress here and see all my code on " (link-to "https://github.com/jediwhale/exploring.net" "github") ".
+
+We started this series of posts by using Newton's method to find square roots. Now we're going to use Newton's method to find the root of any function (section 1.3.4). Newton showed that for a function f and its derivative f', we can find a value x where f(x) = 0, by starting with a guess y, and using y - f(y) / f'(y) to get a better guess. As before, we calculate better guesses until the difference between guesses becomes very small. We can find the square root of a number a with this method by using the function f(x) = x**2 - a.>%)
+(note "We already have some code that computes guesses repeatedly for square roots. Let's extract a function that does this for any guess calculation. (In math jargon, this is called finding the fixed point.) Here's the F# version:")
+(code
+"module Newton =
+
+    let rec findFixedPoint improveGuess guess =
+        let newGuess = improveGuess guess
+        let goodEnough = abs((guess - newGuess) / guess) < 0.000001
+        if goodEnough then newGuess else findFixedPoint improveGuess newGuess 
+
+    let squareRoot input =
+        let squareRootFromGuess = findFixedPoint (fun guess -> (guess + input / guess) / 2.0)
+        match input with
+            | 0.0 -> 0.0
+            | input when input < 0.0 -> raise (new System.ArgumentOutOfRangeException())
+            | input -> squareRootFromGuess 1.0 
+")
+(note %<Notice how we define a function squareRootFromGuess by calling findFixedPoint with the guess calculation function we want to use. This is called partial application, because findFixedPoint takes two arguments and we're only providing the first. The second argument is supplied when we call squareRootFromGuess.
+
+Now we can use this function with Newton's general guess calculation. This time, let's write NUnit tests in F#, that we can use for both F# and C# versions of production code. F# has all the object-oriented features we need to define abstract classes and methods, inheritance and method overrides. We can even use method names with embedded spaces to get a nice readable test results report from NUnit. Here's a couple of tests and a test fixture class:>%)
+(code
+"open NUnit.Framework
+open Exploring.Net.FSharp.Newton
+
+[&lt;AbstractClass>]
+type NewtonTest() =
+
+    abstract member FindSquareRoot: float -> float
+
+    [&lt;Test>]
+    member this.``initial guess is correct``() =
+        Assert.AreEqual(1.0, this.FindSquareRoot(1.0)) 
+
+    [&lt;Test>]
+    member this.``result gets close enough``() =
+        Assert.AreEqual(2.0, this.FindSquareRoot(4.0), 1E-10);
+
+[&lt;TestFixture>]
+type NewtonTestFSharp() =
+    inherit NewtonTest()
+    override this.FindSquareRoot input = squareRoot2 input
+")
+(note "Here's some F# code to pass the tests. We define a derivative function as (f(x+dx) - f(x)) / dx, where dx is a small amount. We define Newton's function to transform a guess into a better guess. We've defined a constant for our small amount, and added checks for floating point overflow.")
+(code
+"open System
+
+module Newton =
+    let smallAmount = 1E-6
+
+    let rec findFixedPoint improveGuess guess =
+        let newGuess = improveGuess guess
+        if Double.IsNaN newGuess || Double.IsInfinity newGuess
+            then newGuess
+            else
+                let goodEnough = abs((guess - newGuess) / guess) < smallAmount
+                if goodEnough then newGuess else findFixedPoint improveGuess newGuess
+
+    let squareRoot input = ... 
+
+    let findRoot aFunction firstGuess =
+        let derivative = fun x -> (aFunction (x + smallAmount) - aFunction x) / smallAmount
+        let newtonsTransform = fun x -> x - (aFunction x) / (derivative x)
+        findFixedPoint newtonsTransform firstGuess
+
+    let squareRoot2 input = findRoot (fun x -> x*x - input) 1.0
+")
+(note "Now the same in C#. We add a test fixture class to our F# tests.")
+(code
+"[&lt;TestFixture>]
+type NewtonTestCSharp() =
+    inherit NewtonTest()
+    override this.FindSquareRoot input = Newton.SquareRoot2 input
+")
+(note "Now refactor the C# square root calculation to extract the FindFixedPoint function and use it to implement the general Newton's method calculation.")
+(code
+"public static class Newton {
+    public static double SquareRoot(this double input) {
+        if (input < 0.0) throw new ArgumentOutOfRangeException();
+        if (input == 0.0) return input;
+        return FindFixedPoint(guess => (guess + input / guess) / 2.0, 1.0);
+    }
+
+    public static double SquareRoot2(double input) {
+        return FindRoot(x => x * x - input, 1.0);
+    }
+
+    public static double FindRoot(Func function, double guess) {
+        Func newtonsTransform = x => x - function(x) / Derivative(function)(x);
+        return FindFixedPoint(newtonsTransform, guess);
+    }
+
+    static Func Derivative(Func function) {
+        return x => (function(x + smallAmount) - function(x)) / smallAmount;
+    }
+
+    static double FindFixedPoint(Func improveGuess, double initialGuess) {
+        var guess = initialGuess;
+        while (true) {
+            var newGuess = improveGuess(guess);
+            if (double.IsNaN(newGuess) || double.IsInfinity(newGuess)) return newGuess;
+            if (CloseEnough(guess, newGuess)) return newGuess;
+            guess = newGuess;
+        }
+    }
+
+    static bool CloseEnough(double guess, double newGuess) {
+        return Math.Abs((guess - newGuess) / guess) < smallAmount;
+    }
+
+    const double smallAmount = 0.000001;
+}
+")
+(wide "We've seen how F# lets us pass functions as parameters, assign functions to identifiers, create new functions from existing functions, in fact, do practically anything with functions that we're used to doing with simple data types. But we're also able to do much of the same things in C#. And we've seen a few of the object-oriented features of F# that are comparable to C#. So with two hybrid languages with a combination of object-oriented and functional features, how would we determine which is more suited to a particular problem? I'm not ready to answer that yet, but I'll close with some interesting comments I came across: " (link-to "https://sharp-gamedev.blogspot.com/2011/05/myths-about-risks-of-introducing-f-in.html" "The myths about the risks of introducing F# in your development team") ".")
+)
