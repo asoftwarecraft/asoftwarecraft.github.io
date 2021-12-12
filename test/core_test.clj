@@ -29,4 +29,26 @@
 (deftest split-with-only-multiple-delimited
   (is (= '(["" "stuff"] ["" "more"] ["" ""]) (split-source "%<stuff>%%<more>%" "%<" ">%"))))
 
+(deftest build-non-blank
+  (is (= '("somestuff") (build-blocks '("some" "stuff")))))
 
+(deftest build-with-blank
+  (is (= '("somestuff" "") (build-blocks '("some" "stuff" "")))))
+
+(deftest build-skips-multiple-blanks
+  (is (= '("somestuff" "") (build-blocks '("some" "stuff" "" "")))))
+
+(deftest build-multiple-non-blank-blocks
+  (is (= '("somemore" "" "stuff") (build-blocks '("some" "more" " " "stuff")))))
+
+(deftest transform-no-markup
+  (is (= "stuff" (transform "stuff"))))
+
+(deftest transform-simple-markup
+  (is (= "more\"stuff\"" (transform "more%<stuff>%"))))
+
+(deftest transform-multiple-markup
+  (is (= "more\"stuff\"and\"still\"going" (transform "more%<stuff>%and%<still>%going"))))
+
+(deftest transform-markup-with-blank-lines
+  (is (= "(some \"more\n\"(break)\"stuff\")" (transform "(some %<more\n\nstuff>%)"))))
