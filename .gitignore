@@ -11,3 +11,8 @@ pom.xml.asc
 *.iml
 /.idea
 
+.idea/
+obj/
+bin/
+*.user
+
